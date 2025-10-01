@@ -1,0 +1,78 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: employee_attendance_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: employee_attendance
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: employee_attendance_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Qdrant Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: employee_attendance_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      QDRANT__SERVICE__GRPC_PORT: 6334
+
+  # FastAPI Application (Optional - uncomment when ready)
+  # app:
+  #   build: .
+  #   container_name: employee_attendance_app
+  #   command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - .:/app
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/employee_attendance
+  #     - QDRANT_URL=http://qdrant:6333
+  #     - MINIO_ENDPOINT=minio:9000
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #     qdrant:
+  #       condition: service_started
+
+volumes:
+  postgres_data:
+  minio_data:
+  qdrant_data:

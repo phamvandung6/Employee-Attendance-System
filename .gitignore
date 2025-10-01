@@ -33,4 +33,27 @@ node_modules/
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/
+
+# ML Models
+models/*.onnx
+models/*.pth
+models/*.pt
+
+# Data
+data/faces/*
+data/temp/*
+!data/faces/.gitkeep
+!data/temp/.gitkeep
+
+# Test coverage
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Alembic
+alembic/versions/*.py
+!alembic/versions/.gitkeep
+
+# Temporary files
+temp.md 
