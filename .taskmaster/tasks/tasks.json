@@ -1,0 +1,207 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Thiết lập cấu trúc dự án và môi trường",
+        "description": "Khởi tạo cấu trúc thư mục FastAPI theo kiến trúc clean architecture, cấu hình môi trường và dependencies cơ bản",
+        "details": "Tạo toàn bộ cấu trúc thư mục theo temp.md bao gồm app/, alembic/, tests/, scripts/, models/, data/, logs/, docs/. Cấu hình pyproject.toml với các dependencies: fastapi, uvicorn, sqlalchemy, alembic, pydantic, python-jose, passlib, python-multipart, qdrant-client, onnxruntime, opencv-python, numpy, pillow. Tạo .env.example và .gitignore. Setup Docker với docker-compose.yml cho PostgreSQL và MinIO.",
+        "testStrategy": "Kiểm tra cấu trúc thư mục được tạo đúng, chạy uv install thành công, docker-compose up hoạt động bình thường",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Cấu hình cơ sở dữ liệu và migrations",
+        "description": "Thiết lập kết nối PostgreSQL, SQLAlchemy models và Alembic migrations cho toàn bộ schema",
+        "details": "Tạo app/core/config.py với Pydantic Settings cho database URL, JWT secret. Implement app/db/session.py với SQLAlchemy engine và SessionLocal. Tạo app/models/base.py với Base class. Implement các models: Employee (id, name, department, position, active_status), Attendance (id, employee_id, check_in, check_out, date), FaceEmbedding (id, employee_id, embedding_vector, image_url), Violation (id, employee_id, violation_type, timestamp, image_url), User (id, username, role, permissions). Cấu hình alembic.ini và tạo initial migration.",
+        "testStrategy": "Chạy alembic upgrade head thành công, kiểm tra các bảng được tạo trong PostgreSQL với đúng schema",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Xây dựng hệ thống authentication JWT",
+        "description": "Implement JWT authentication, middleware bảo mật và user management cơ bản",
+        "details": "Tạo app/core/security.py với JWT encode/decode, password hashing (bcrypt). Implement app/schemas/auth.py với LoginRequest, TokenResponse. Tạo app/api/v1/endpoints/auth.py với /login, /register endpoints. Implement app/middleware/auth_middleware.py cho JWT verification. Tạo app/dependencies.py với get_current_user dependency. Seed admin user trong scripts/init_db.py.",
+        "testStrategy": "Test đăng nhập thành công trả về JWT token, middleware verify token đúng, protected endpoints từ chối request không có token",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Xây dựng Employee management APIs",
+        "description": "Tạo CRUD operations cho quản lý nhân viên với validation và business logic",
+        "details": "Tạo app/schemas/employee.py với EmployeeCreate, EmployeeUpdate, EmployeeResponse schemas. Implement app/repositories/employee_repository.py với CRUD operations. Tạo app/services/employee_service.py với business logic validation. Implement app/api/v1/endpoints/employees.py với GET /employees, POST /employees, PUT /employees/{id}, DELETE /employees/{id}. Thêm filtering, pagination và search functionality.",
+        "testStrategy": "Test CRUD operations qua API endpoints, validation input đúng, pagination hoạt động, search theo name/department",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Thiết lập storage service với MinIO/S3",
+        "description": "Implement file storage service cho images và videos sử dụng MinIO hoặc S3",
+        "details": "Cài đặt minio client library. Tạo app/services/storage_service.py với upload_file, download_file, generate_presigned_url methods. Cấu hình MinIO connection trong app/core/config.py. Tạo buckets cho faces, violations. Implement image validation (format, size limits). Thêm file cleanup utilities trong app/utils/file_utils.py.",
+        "testStrategy": "Test upload image thành công, generate URL accessible, download file correct, file validation reject invalid formats",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Thiết lập Qdrant vector database connection",
+        "description": "Cấu hình kết nối Qdrant Cloud để lưu trữ face embeddings với high performance search",
+        "details": "Cài đặt qdrant-client. Tạo app/vector_db/qdrant_client.py với QdrantClient connection. Implement app/vector_db/face_vector_service.py với insert_embedding, search_similar, delete_embedding methods. Cấu hình collection 'face_embeddings' với vector dimension 512 (ArcFace), cosine similarity. Thêm error handling và retry logic cho network issues.",
+        "testStrategy": "Test connection to Qdrant Cloud successful, insert embedding works, similarity search returns correct results với threshold 0.6-0.7",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement face detection pipeline",
+        "description": "Xây dựng face detection sử dụng YOLO/RetinaFace để detect faces từ camera feed",
+        "details": "Download pre-trained RetinaFace ONNX model. Tạo app/ml/face_recognition/detector.py với FaceDetector class. Implement detect_faces method nhận input image, return bounding boxes và confidence scores. Tạo app/ml/face_recognition/preprocessor.py cho image preprocessing (resize, normalize). Thêm confidence threshold filtering (>0.8). Implement batch processing cho multiple faces.",
+        "testStrategy": "Test detect faces từ sample images, accuracy >90% với good lighting, return correct bounding box coordinates",
+        "priority": "high",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Xây dựng face embedding extraction",
+        "description": "Implement ArcFace model để extract face embeddings cho face recognition",
+        "details": "Download ArcFace ResNet50 ONNX model. Tạo app/ml/face_recognition/extractor.py với EmbeddingExtractor class. Implement extract_embedding method nhận face crop (112x112), return 512-dimensional vector. Thêm face alignment preprocessing. Implement batch extraction cho performance. Thêm embedding normalization (L2 norm).",
+        "testStrategy": "Test extract embeddings từ cropped faces, vector dimension = 512, same face có similarity >0.8, different faces có similarity <0.4",
+        "priority": "high",
+        "dependencies": [
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Xây dựng face matching service",
+        "description": "Implement face matching algorithm với Qdrant để identify employees từ face embeddings",
+        "details": "Tạo app/ml/face_recognition/matcher.py với FaceMatcher class. Implement match_face method nhận embedding, search trong Qdrant, return employee_id và confidence score. Set similarity threshold 0.65 for matching. Implement register_face method để thêm new face embedding. Thêm duplicate detection khi register. Handle edge cases: no faces found, multiple matches.",
+        "testStrategy": "Test register face embedding successful, match known face return correct employee_id, unknown face return None, similarity scores trong expected range",
+        "priority": "high",
+        "dependencies": [
+          6,
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Tạo complete face recognition pipeline",
+        "description": "Tích hợp face detection, embedding extraction và matching thành một pipeline hoàn chỉnh",
+        "details": "Tạo app/ml/face_recognition/pipeline.py với FaceRecognitionPipeline class. Implement process_image method: detect faces → extract embeddings → match với database → return results. Thêm performance optimization: caching, async processing. Implement register_employee_face workflow. Thêm confidence scoring và multiple face handling. Error handling cho failed detection/extraction.",
+        "testStrategy": "Test end-to-end pipeline với real images, response time <2 seconds, accuracy >95% với good quality images",
+        "priority": "high",
+        "dependencies": [
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Xây dựng Face Recognition APIs",
+        "description": "Tạo REST API endpoints cho face registration và recognition operations",
+        "details": "Tạo app/schemas/face_recognition.py với FaceRegistration, RecognitionResult schemas. Implement app/api/v1/endpoints/face_recognition.py với POST /face-recognition/register (upload face image + employee_id), POST /face-recognition/recognize (upload image, return employee info), GET /face-recognition/embeddings/{employee_id}. Thêm file upload validation, async processing. Integrate storage service cho face images.",
+        "testStrategy": "Test register face API với valid image successful, recognize API return correct employee, invalid images return proper error messages",
+        "priority": "high",
+        "dependencies": [
+          10
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Implement Attendance System Logic",
+        "description": "Xây dựng logic tự động ghi nhận attendance khi face được recognized",
+        "details": "Tạo app/schemas/attendance.py với AttendanceRecord, AttendanceQuery schemas. Implement app/repositories/attendance_repository.py với CRUD operations. Tạo app/services/attendance_service.py với auto check-in/check-out logic, business rules (duplicate check, time windows). Implement app/api/v1/endpoints/attendance.py với GET /attendance (query với filters), POST /attendance/check-in, POST /attendance/check-out.",
+        "testStrategy": "Test auto check-in when face recognized, prevent duplicate check-ins same day, attendance queries với date/employee filters work correctly",
+        "priority": "medium",
+        "dependencies": [
+          11,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Xây dựng Violation Detection System",
+        "description": "Implement ID card detection và uniform detection để phát hiện violations",
+        "details": "Tạo YOLO model config cho ID card detection. Implement app/ml/id_card/detector.py với IDCardDetector class. Tạo uniform classification model với app/ml/uniform/classifier.py. Implement app/services/violation_service.py với detect_violations method. Tạo app/models/violation.py và corresponding repository. Thêm violation logging khi face recognized nhưng missing ID card/uniform.",
+        "testStrategy": "Test ID card detection accuracy >85%, uniform detection accuracy >80%, violations được log correctly với timestamps",
+        "priority": "low",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Tạo Reporting và Analytics APIs",
+        "description": "Xây dựng system reports, analytics dashboard và data export functionality",
+        "details": "Tạo app/schemas/reports.py với AttendanceReport, ViolationReport schemas. Implement app/services/report_service.py với generate_attendance_report, generate_violation_summary methods. Tạo app/api/v1/endpoints/reports.py với GET /reports/attendance, GET /reports/violations, GET /reports/export endpoints. Thêm date range filtering, department grouping, CSV/Excel export.",
+        "testStrategy": "Test generate reports với correct data, export files downloadable, filters hoạt động properly, performance acceptable với large datasets",
+        "priority": "low",
+        "dependencies": [
+          12,
+          13
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Tối ưu performance và production setup",
+        "description": "Optimize inference speed, implement caching, logging và monitoring cho production deployment",
+        "details": "Implement Redis caching cho face embeddings frequently accessed. Optimize ONNX runtime với GPU acceleration nếu available. Tạo app/utils/logger.py với structured logging. Implement rate limiting middleware. Thêm health check endpoints. Setup Docker production image với multi-stage builds. Implement graceful shutdown. Thêm monitoring metrics collection.",
+        "testStrategy": "Test performance improvements measurable, caching reduces database load, logging capture errors properly, health checks respond correctly",
+        "priority": "medium",
+        "dependencies": [
+          14
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-10-01T03:37:26.518Z",
+      "updated": "2025-10-01T03:37:26.518Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

@@ -1,0 +1,237 @@
+<context>
+# Overview  
+Employee Attendance System là hệ thống chấm công tự động dựa trên camera sử dụng AI/Computer Vision. Hệ thống giải quyết vấn đề chấm công thủ công, gian lận chấm công, và quản lý vi phạm quy định (không đeo thẻ, không mặc đồng phục). Phục vụ cho doanh nghiệp muốn tự động hóa quy trình quản lý nhân sự.
+
+# Core Features  
+## 1. Face Recognition (Ưu tiên cao - MVP)
+- **Chức năng**: Nhận diện gương mặt nhân viên để xác định danh tính
+- **Tầm quan trọng**: Core feature chính của hệ thống, đảm bảo chấm công chính xác
+- **Cách hoạt động**: 
+  - Detect face từ camera feed
+  - Extract face embedding
+  - Match với database vector (Qdrant)
+  - Ghi nhận attendance record
+
+## 2. ID Card Detection  
+- **Chức năng**: Phát hiện nhân viên có đeo thẻ nhân viên không
+- **Tầm quan trọng**: Đảm bảo tuân thủ quy định công ty
+- **Cách hoạt động**: Object detection để phát hiện ID card trong frame
+
+## 3. Uniform Detection
+- **Chức năng**: Phát hiện nhân viên có mặc đồng phục không
+- **Tầm quan trọng**: Giám sát tuân thủ dress code
+- **Cách hoạt động**: Image classification/object detection để verify uniform
+
+## 4. Auto Check-in/Check-out
+- **Chức năng**: Tự động ghi nhận thời gian vào/ra
+- **Tầm quan trọng**: Tự động hóa quy trình attendance
+- **Cách hoạt động**: Trigger attendance record khi face recognized
+
+## 5. Violation Management
+- **Chức năng**: Ghi nhận và quản lý các vi phạm (không đeo thẻ, không mặc đồng phục)
+- **Tầm quan trọng**: Compliance và reporting
+- **Cách hoạt động**: Log violations, generate reports
+
+# User Experience  
+## User Personas
+- **HR Manager**: Xem reports, quản lý nhân viên, xem violations
+- **Employee**: Tự động check-in khi đi qua camera
+- **Admin**: Quản lý system, train face models, configure settings
+
+## Key User Flows
+1. **Employee Check-in**: Nhân viên đi qua camera → Face detected → Recognized → Auto check-in
+2. **Register Employee**: HR upload face photos → System trains embeddings → Save to vector DB
+3. **View Attendance**: HR access dashboard → Filter by date/employee → View/export reports
+4. **Violation Alert**: System detects no ID card → Log violation → Notify HR
+
+## UI/UX Considerations
+- Dashboard hiển thị real-time attendance
+- Simple employee registration flow
+- Clear violation reporting interface
+- Mobile-friendly responsive design
+</context>
+
+<PRD>
+# Technical Architecture  
+## System Components
+- **Backend API**: FastAPI, Python
+- **Database**: PostgreSQL (relational data)
+- **Vector Database**: Qdrant Cloud (face embeddings)
+- **Storage**: MinIO/S3 (images, videos)
+- **ML Models**: 
+  - Face Detection: YOLO/RetinaFace
+  - Face Recognition: ArcFace (ONNX)
+  - ID Card Detection: Custom YOLO
+  - Uniform Detection: Custom classifier
+
+## Data Models
+- **Employee**: id, name, department, position, active_status
+- **Attendance**: id, employee_id, check_in, check_out, date
+- **FaceEmbedding**: id, employee_id, embedding_vector, image_url
+- **Violation**: id, employee_id, violation_type, timestamp, image_url
+- **User**: id, username, role, permissions (for admin access)
+
+## APIs and Integrations
+- REST API endpoints (v1):
+  - /auth: Authentication
+  - /employees: CRUD employees
+  - /attendance: Attendance records
+  - /face-recognition: Face operations
+  - /violations: Violation management
+  - /reports: Analytics and reports
+- Qdrant Cloud API for vector search
+- MinIO/S3 API for file storage
+
+## Infrastructure Requirements
+- Docker containerization
+- Alembic for database migrations
+- UV for Python package management
+- Environment-based configuration
+
+# Development Roadmap  
+## Phase 1: MVP - Face Recognition System (Core)
+### Backend Foundation
+- Setup FastAPI project structure
+- Configure database (PostgreSQL + Alembic)
+- Implement basic auth (JWT)
+- Create Employee CRUD APIs
+
+### Face Recognition Core
+- Implement face detection pipeline
+- Setup face embedding extraction (ArcFace)
+- Integrate Qdrant for vector storage
+- Build face matching service
+- Create face registration API
+
+### Attendance System
+- Build attendance recording logic
+- Create check-in/check-out APIs
+- Implement attendance query/reports
+
+### Basic UI
+- Employee management dashboard
+- Face registration interface
+- Attendance view/export
+
+## Phase 2: Enhanced Features
+### ID Card & Uniform Detection
+- Train/integrate ID card detection model
+- Train/integrate uniform detection model
+- Build violation detection pipeline
+- Create violation management APIs
+
+### Violation System
+- Implement violation logging
+- Build violation reporting dashboard
+- Add violation notifications
+
+### Advanced Reporting
+- Analytics dashboard
+- Custom report generation
+- Data export functionality
+
+## Phase 3: Optimization & Production
+### Performance
+- Optimize ML model inference
+- Implement caching strategies
+- Add rate limiting
+- Load balancing setup
+
+### Monitoring & DevOps
+- Logging and monitoring
+- CI/CD pipeline
+- Backup and recovery
+- Security hardening
+
+# Logical Dependency Chain
+## Foundation Layer (Must build first)
+1. **Project Setup**: 
+   - Initialize FastAPI app structure
+   - Setup database connection
+   - Configure environment variables
+   - Implement basic error handling
+
+2. **Database Models & Migrations**:
+   - Create all SQLAlchemy models
+   - Setup Alembic migrations
+   - Create base repositories
+
+3. **Authentication System**:
+   - Implement JWT authentication
+   - Create user management
+   - Setup middleware
+
+## Core Feature Layer (MVP)
+4. **Employee Management**:
+   - CRUD operations
+   - Data validation schemas
+   - API endpoints
+
+5. **Face Recognition Pipeline** (Critical Path):
+   - Face detection implementation
+   - Embedding extraction
+   - Qdrant integration
+   - Face matching algorithm
+   - Face registration flow
+
+6. **Attendance System**:
+   - Attendance recording logic
+   - Check-in/check-out workflow
+   - Query and reporting APIs
+
+7. **Storage Service**:
+   - MinIO/S3 integration
+   - Image upload/retrieval
+   - URL generation
+
+## Quick Win UI (Show progress)
+8. **Basic Frontend**:
+   - Employee list/create view
+   - Face registration interface
+   - Attendance dashboard (read-only)
+
+## Enhancement Layer
+9. **Violation Detection**:
+   - ID card detection
+   - Uniform detection
+   - Violation logging
+
+10. **Advanced Features**:
+    - Reports and analytics
+    - Notifications
+    - Export functionality
+
+# Risks and Mitigations  
+## Technical Challenges
+- **Face Recognition Accuracy**: 
+  - Mitigation: Use proven models (ArcFace), collect diverse training data
+- **Real-time Performance**: 
+  - Mitigation: Optimize inference, use ONNX, implement caching
+- **Lighting Conditions**: 
+  - Mitigation: Image preprocessing, data augmentation during training
+
+## MVP Definition
+- **Scope**: Focus on face recognition + attendance only in Phase 1
+- **Success Criteria**: Accurate face recognition (>95%), reliable attendance logging
+- **Quick Feedback**: Build basic UI early to validate workflow
+
+## Resource Constraints
+- **Model Training**: Start with pre-trained models, fine-tune only if needed
+- **Infrastructure**: Use cloud services (Qdrant Cloud) to minimize setup
+- **Development**: Prioritize core features, defer nice-to-haves
+
+# Appendix  
+## Technical Specifications
+- **Face Detection**: RetinaFace/YOLO for robust detection
+- **Face Recognition**: ArcFace ResNet50 (ONNX format)
+- **Vector DB**: Qdrant Cloud with cosine similarity
+- **Similarity Threshold**: 0.6-0.7 for face matching
+- **Image Requirements**: Minimum 112x112 for face crops
+
+## Research Findings
+- ArcFace outperforms FaceNet for face recognition
+- Qdrant provides fast vector search with good Python SDK
+- ONNX runtime provides 2-3x inference speedup vs PyTorch
+- UV package manager is faster than pip/poetry
+</PRD>
+
