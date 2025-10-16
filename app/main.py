@@ -7,6 +7,7 @@ from fastapi.openapi.utils import get_openapi
 
 from app.core.config import settings
 from app.api.v1.router import api_router
+from app.vector_db import init_qdrant, cleanup_qdrant
 
 
 @asynccontextmanager
@@ -14,9 +15,19 @@ async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
     print("🚀 Starting up...")
+    try:
+        await init_qdrant()
+        print("✅ Qdrant initialized successfully")
+    except Exception as e:
+        print(f"❌ Failed to initialize Qdrant: {e}")
+        raise
+
     yield
+
     # Shutdown
     print("🛑 Shutting down...")
+    await cleanup_qdrant()
+    print("✅ Qdrant cleanup completed")
 
 
 def create_application() -> FastAPI:
