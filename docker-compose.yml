@@ -39,17 +39,17 @@ services:
       retries: 3
 
   # Qdrant Vector Database
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: employee_attendance_qdrant
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    environment:
-      QDRANT__SERVICE__HTTP_PORT: 6333
-      QDRANT__SERVICE__GRPC_PORT: 6334
+  # qdrant:
+  #   image: qdrant/qdrant:latest
+  #   container_name: employee_attendance_qdrant
+  #   ports:
+  #     - "6333:6333"
+  #     - "6334:6334"
+  #   volumes:
+  #     - qdrant_data:/qdrant/storage
+  #   environment:
+  #     QDRANT__SERVICE__HTTP_PORT: 6333
+  #     QDRANT__SERVICE__GRPC_PORT: 6334
 
   # FastAPI Application (Optional - uncomment when ready)
   # app:
@@ -75,4 +75,4 @@ services:
 volumes:
   postgres_data:
   minio_data:
-  qdrant_data:
+  # qdrant_data:
