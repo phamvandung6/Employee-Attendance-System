@@ -31,7 +31,7 @@ async def register_face(
     employee_id: Annotated[int, Form(..., description="Employee ID")],
     image: Annotated[UploadFile, File(..., description="Face image file")],
     check_duplicate: Annotated[
-        bool, Form(True, description="Check for duplicate faces")
+        bool, Form(description="Check for duplicate faces")
     ] = True,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -125,10 +125,10 @@ async def register_face(
 async def recognize_faces(
     image: Annotated[UploadFile, File(..., description="Image containing faces")],
     max_faces: Annotated[
-        int | None, Form(None, description="Maximum faces to detect")
+        int | None, Form(description="Maximum faces to detect")
     ] = None,
     threshold: Annotated[
-        float | None, Form(None, ge=0.0, le=1.0, description="Match threshold")
+        float | None, Form(ge=0.0, le=1.0, description="Match threshold")
     ] = None,
     current_user: User = Depends(get_current_user),
 ):
@@ -198,7 +198,7 @@ async def verify_employee(
     employee_id: int,
     image: Annotated[UploadFile, File(..., description="Face image to verify")],
     threshold: Annotated[
-        float | None, Form(None, ge=0.0, le=1.0, description="Match threshold")
+        float | None, Form(ge=0.0, le=1.0, description="Match threshold")
     ] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -264,7 +264,7 @@ async def verify_employee(
 async def identify_employee(
     image: Annotated[UploadFile, File(..., description="Face image")],
     threshold: Annotated[
-        float | None, Form(None, ge=0.0, le=1.0, description="Match threshold")
+        float | None, Form(ge=0.0, le=1.0, description="Match threshold")
     ] = None,
     current_user: User = Depends(get_current_user),
 ):

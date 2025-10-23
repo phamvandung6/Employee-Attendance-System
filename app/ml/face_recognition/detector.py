@@ -12,6 +12,7 @@ except ImportError:
     get_model = None
 
 from app.ml.face_recognition.preprocessor import preprocessor
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,8 @@ class FaceDetector:
 
             # Prepare model (download if needed)
             ctx_id = -1 if device == "cpu" else 0
-            self.app.prepare(ctx_id=ctx_id, det_size=(640, 640))
+            det_size = (settings.face_detection_size, settings.face_detection_size)
+            self.app.prepare(ctx_id=ctx_id, det_size=det_size)
 
             logger.info(
                 f"Face detector initialized: {model_name} on {device}, "
@@ -257,13 +259,14 @@ def get_face_detector(
     """
     global _detector
 
-    threshold = confidence_threshold or 0.8
+    threshold = confidence_threshold or settings.face_detection_threshold
+    device = "cuda" if settings.use_gpu else "cpu"
 
     if _detector is None:
         _detector = FaceDetector(
-            model_name="buffalo_l",
+            model_name=settings.insightface_model_pack,
             confidence_threshold=threshold,
-            device="cpu",  # Change to 'cuda' if GPU available
+            device=device,
         )
     elif confidence_threshold is not None:
         _detector.confidence_threshold = threshold

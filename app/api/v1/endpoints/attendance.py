@@ -85,8 +85,7 @@ async def get_attendance(
 async def check_in(
     image: Annotated[UploadFile, File(..., description="Face image for recognition")],
     employee_id: Annotated[
-        int | None,
-        Form(None, description="Employee ID (optional if using face recognition)"),
+        int | None, Form(description="Employee ID (optional if using face recognition)")
     ] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -185,8 +184,7 @@ async def check_in(
 async def check_out(
     image: Annotated[UploadFile, File(..., description="Face image for recognition")],
     employee_id: Annotated[
-        int | None,
-        Form(None, description="Employee ID (optional if using face recognition)"),
+        int | None, Form(description="Employee ID (optional if using face recognition)")
     ] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),

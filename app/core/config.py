@@ -47,6 +47,24 @@ class Settings(BaseSettings):
     face_similarity_threshold: float = Field(default=0.6)
     model_path: str = Field(default="models/face_recognition")
 
+    # InsightFace Model Configuration
+    insightface_model_pack: str = Field(
+        default="buffalo_l", description="InsightFace model pack name"
+    )
+    face_detection_size: int = Field(
+        default=640, description="Face detection input size"
+    )
+    face_detection_threshold: float = Field(
+        default=0.8, description="Face detection confidence threshold"
+    )
+    face_match_threshold: float = Field(
+        default=0.65, description="Face matching similarity threshold"
+    )
+    use_gpu: bool = Field(
+        default=False,
+        description="Use GPU for face recognition (requires onnxruntime-gpu)",
+    )
+
     # API
     api_v1_prefix: str = Field(default="/api/v1")
     cors_origins: List[str] = Field(default=["http://localhost:3000"])

@@ -13,6 +13,7 @@ from app.ml.face_recognition.extractor import (
 )
 from app.ml.face_recognition.matcher import face_matcher, FaceMatcher, FaceMatchResult
 from app.ml.face_recognition.preprocessor import preprocessor
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -425,4 +426,6 @@ class FaceRecognitionPipeline:
 
 
 # Global pipeline instance
-face_recognition_pipeline = FaceRecognitionPipeline(match_threshold=0.65)
+face_recognition_pipeline = FaceRecognitionPipeline(
+    match_threshold=settings.face_match_threshold
+)

@@ -13,7 +13,6 @@ dependencies = [
     "fastapi>=0.118.0",
     "minio>=7.2.18",
     "numpy>=2.3.3",
-    "onnxruntime>=1.23.0",
     "opencv-python-headless>=4.11.0.86",
     "passlib[bcrypt]>=1.7.4",
     "pillow>=11.3.0",
@@ -26,6 +25,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.43",
     "uvicorn[standard]>=0.37.0",
     "insightface>=0.7.3",
+    "onnxruntime-gpu>=1.23.2",
 ]
 
 [dependency-groups]

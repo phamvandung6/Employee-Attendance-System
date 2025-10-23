@@ -10,6 +10,7 @@ except ImportError:
     FaceAnalysis = None
 
 from app.ml.face_recognition.preprocessor import preprocessor
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -284,9 +285,10 @@ def get_embedding_extractor() -> EmbeddingExtractor:
     global _extractor
 
     if _extractor is None:
+        device = "cuda" if settings.use_gpu else "cpu"
         _extractor = EmbeddingExtractor(
-            model_name="buffalo_l",
-            device="cpu",  # Change to 'cuda' if GPU available
+            model_name=settings.insightface_model_pack,
+            device=device,
         )
 
     return _extractor

@@ -11,6 +11,7 @@ from app.ml.face_recognition.extractor import (
     EmbeddingExtractor,
 )
 from app.ml.face_recognition.detector import get_face_detector, FaceDetector
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -355,4 +356,4 @@ class FaceMatcher:
 
 
 # Global matcher instance
-face_matcher = FaceMatcher(similarity_threshold=0.65)
+face_matcher = FaceMatcher(similarity_threshold=settings.face_match_threshold)
