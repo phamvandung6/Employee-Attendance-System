@@ -87,20 +87,70 @@ class EmbeddingExtractor:
             raise ValueError("Invalid face image")
 
         try:
-            # Detect face and extract embedding
-            faces = self.app.get(face_image)
+            # Check if this is an aligned face (112x112) - if so, extract directly
+            h, w = face_image.shape[:2]
+            is_aligned_face = h == 112 and w == 112
 
-            if not faces:
-                raise ValueError("No face detected in the provided image")
+            if is_aligned_face:
+                # For aligned faces, extract embedding directly from recognition model
+                # This is faster than creating dummy image and detecting again
+                logger.debug(
+                    "Extracting embedding directly from aligned face (112x112)"
+                )
 
-            # Use the first (and should be only) face
-            face = faces[0]
+                # Get recognition model directly
+                if "recognition" not in self.app.models:
+                    raise RuntimeError("Recognition model not available")
 
-            # Get embedding
-            embedding = face.normed_embedding if normalize else face.embedding
+                rec_model = self.app.models["recognition"]
 
-            if embedding is None:
-                raise ValueError("Failed to extract embedding from face")
+                # Create a minimal face object for aligned face
+                # Aligned face is 112x112, so bbox covers entire image
+                # Use standard landmarks for aligned face (centered)
+                class SimpleFace:
+                    def __init__(self):
+                        # Bbox covering entire 112x112 image
+                        self.bbox = np.array([0.0, 0.0, 112.0, 112.0])
+                        # Standard landmarks for aligned face (centered)
+                        self.kps = np.array(
+                            [
+                                [38.2946, 51.6963],  # Left eye
+                                [73.5318, 51.5014],  # Right eye
+                                [56.0252, 71.7366],  # Nose tip
+                                [41.5493, 92.3655],  # Left mouth corner
+                                [70.7299, 92.2041],  # Right mouth corner
+                            ],
+                            dtype=np.float32,
+                        )
+
+                face_obj = SimpleFace()
+
+                # Call recognition model with aligned face and face object
+                embedding = rec_model.get(face_image, face_obj)
+
+                # Normalize if requested
+                if normalize:
+                    norm = np.linalg.norm(embedding)
+                    if norm > 0:
+                        embedding = embedding / norm
+                    else:
+                        raise ValueError("Zero embedding norm")
+            else:
+                # For full images, detect face first then extract embedding
+                logger.debug("Detecting face in full image before extraction")
+                faces = self.app.get(face_image)
+
+                if not faces:
+                    raise ValueError("No face detected in the provided image")
+
+                # Use the first (and should be only) face
+                face = faces[0]
+
+                # Get embedding
+                embedding = face.normed_embedding if normalize else face.embedding
+
+                if embedding is None:
+                    raise ValueError("Failed to extract embedding from face")
 
             # Ensure correct shape
             if embedding.shape[0] != self.embedding_size:

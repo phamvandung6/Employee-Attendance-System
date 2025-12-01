@@ -126,11 +126,35 @@ class FaceDetector:
             raise ValueError("Invalid input image")
 
         try:
+            # Apply preprocessing if configured
+            processed_image = image
+            if settings.image_preprocessing != "none":
+                logger.debug(f"Applying {settings.image_preprocessing} preprocessing")
+                processed_image = preprocessor.apply_pipeline(
+                    image, settings.image_preprocessing
+                )
+
             # Run detection
-            faces = self.app.get(image, max_num=max_faces or 0)
+            faces = self.app.get(processed_image, max_num=max_faces or 0)
+            
+            logger.warning(
+                f"InsightFace detected {len(faces)} face(s) before threshold filtering "
+                f"(threshold: {self.confidence_threshold})"
+            )
+            
+            # Log all detected faces with their scores
+            if faces:
+                for i, face in enumerate(faces):
+                    logger.warning(
+                        f"Face {i+1}: confidence={face.det_score:.4f}, "
+                        f"bbox={face.bbox.tolist() if hasattr(face.bbox, 'tolist') else face.bbox}"
+                    )
+            else:
+                logger.warning("InsightFace did not detect any faces at all!")
 
             # Filter by confidence and convert to results
             results = []
+            filtered_count = 0
             for face in faces:
                 if face.det_score >= self.confidence_threshold:
                     # Get aligned face if requested
@@ -149,13 +173,18 @@ class FaceDetector:
                         aligned_face=aligned,
                     )
                     results.append(result)
+                else:
+                    filtered_count += 1
+                    logger.warning(
+                        f"Face filtered out: confidence={face.det_score:.4f} < threshold={self.confidence_threshold}"
+                    )
 
             # Sort by confidence (descending)
             results.sort(key=lambda x: x.confidence, reverse=True)
 
-            logger.debug(
-                f"Detected {len(results)} faces with confidence >= "
-                f"{self.confidence_threshold}"
+            logger.warning(
+                f"After filtering: {len(results)} faces passed, {filtered_count} faces filtered out "
+                f"(threshold: {self.confidence_threshold})"
             )
 
             return results

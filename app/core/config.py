@@ -55,7 +55,7 @@ class Settings(BaseSettings):
         default=640, description="Face detection input size"
     )
     face_detection_threshold: float = Field(
-        default=0.8, description="Face detection confidence threshold"
+        default=0.5, description="Face detection confidence threshold"
     )
     face_match_threshold: float = Field(
         default=0.65, description="Face matching similarity threshold"
@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     use_gpu: bool = Field(
         default=False,
         description="Use GPU for face recognition (requires onnxruntime-gpu)",
+    )
+    image_preprocessing: str = Field(
+        default="none",
+        description="Image preprocessing pipeline: none, standard, quality",
     )
 
     # API

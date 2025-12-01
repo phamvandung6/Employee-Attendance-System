@@ -69,6 +69,7 @@ class RegistrationResult:
         employee_id: Optional[UUID],
         point_id: Optional[str],
         processing_time: float,
+        image_quality: Optional[Dict[str, Any]] = None,
         error: Optional[str] = None,
     ):
         """
@@ -79,12 +80,14 @@ class RegistrationResult:
             employee_id: Employee ID
             point_id: Qdrant point ID
             processing_time: Processing time in seconds
+            image_quality: Optional image quality metrics
             error: Error message if failed
         """
         self.success = success
         self.employee_id = employee_id
         self.point_id = point_id
         self.processing_time = processing_time
+        self.image_quality = image_quality
         self.error = error
 
     def to_dict(self) -> Dict[str, Any]:
@@ -94,6 +97,7 @@ class RegistrationResult:
             "employee_id": str(self.employee_id) if self.employee_id else None,
             "point_id": self.point_id,
             "processing_time": round(self.processing_time, 3),
+            "image_quality": self.image_quality,
             "error": self.error,
         }
 
@@ -262,6 +266,12 @@ class FaceRecognitionPipeline:
         try:
             logger.info(f"Registering face for employee {employee_id}")
 
+            # Assess image quality
+            from app.ml.face_recognition.preprocessor import preprocessor
+
+            quality_metrics = preprocessor.assess_image_quality(image)
+            logger.debug(f"Image quality: {quality_metrics}")
+
             # Register through matcher (includes detection and extraction)
             result = await self.matcher.register_face(
                 employee_id=employee_id,
@@ -281,6 +291,7 @@ class FaceRecognitionPipeline:
                 employee_id=employee_id,
                 point_id=result["point_id"],
                 processing_time=processing_time,
+                image_quality=quality_metrics,
             )
 
         except ValueError as e:
@@ -288,11 +299,17 @@ class FaceRecognitionPipeline:
             processing_time = time.time() - start_time
             logger.warning(f"Registration failed for {employee_id}: {e}")
 
+            # Still assess quality even on failure
+            from app.ml.face_recognition.preprocessor import preprocessor
+
+            quality_metrics = preprocessor.assess_image_quality(image)
+
             return RegistrationResult(
                 success=False,
                 employee_id=employee_id,
                 point_id=None,
                 processing_time=processing_time,
+                image_quality=quality_metrics,
                 error=str(e),
             )
 

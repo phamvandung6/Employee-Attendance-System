@@ -2,11 +2,149 @@
 
 import cv2
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Literal
+import logging
+
+logger = logging.getLogger(__name__)
+
+PreprocessPipeline = Literal["none", "standard", "quality"]
 
 
 class ImagePreprocessor:
     """Handles image preprocessing for face detection and recognition."""
+
+    @staticmethod
+    def apply_pipeline(
+        image: np.ndarray,
+        pipeline: PreprocessPipeline = "none",
+    ) -> np.ndarray:
+        """
+        Apply preprocessing pipeline to image.
+
+        Args:
+            image: Input BGR image
+            pipeline: Type of preprocessing pipeline:
+                - "none": No preprocessing (return original)
+                - "standard": CLAHE only (balanced)
+                - "quality": Denoise + CLAHE + Sharpen (for poor quality images)
+
+        Returns:
+            Preprocessed BGR image
+
+        Note:
+            Modern face recognition models (InsightFace, ArcFace) are trained on
+            diverse raw images and typically don't need preprocessing. Use preprocessing
+            only when dealing with poor quality images (mobile cameras, CCTV, low light).
+
+        Performance Impact:
+            - none: ~0ms
+            - standard: ~15ms (+30%)
+            - quality: ~50ms (+100%)
+        """
+        if pipeline == "none":
+            return image
+
+        processed = image.copy()
+
+        if pipeline == "quality":
+            # Full pipeline for poor quality images
+            logger.debug("Applying quality preprocessing pipeline")
+
+            # Step 1: Denoise with bilateral filter (preserves edges)
+            processed = cv2.bilateralFilter(processed, 9, 75, 75)
+
+            # Step 2: CLAHE for contrast enhancement
+            processed = ImagePreprocessor._apply_clahe(
+                processed, clip_limit=3.0, tile_grid_size=(8, 8)
+            )
+
+            # Step 3: Slight sharpening
+            kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]], dtype=np.float32)
+            processed = cv2.filter2D(processed, -1, kernel)
+
+        elif pipeline == "standard":
+            # Lightweight CLAHE only
+            logger.debug("Applying standard preprocessing pipeline")
+            processed = ImagePreprocessor._apply_clahe(
+                processed, clip_limit=2.0, tile_grid_size=(8, 8)
+            )
+
+        return processed
+
+    @staticmethod
+    def _apply_clahe(
+        image: np.ndarray,
+        clip_limit: float = 2.0,
+        tile_grid_size: Tuple[int, int] = (8, 8),
+    ) -> np.ndarray:
+        """
+        Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) to BGR image.
+
+        Args:
+            image: Input BGR image
+            clip_limit: Threshold for contrast limiting
+            tile_grid_size: Size of grid for histogram equalization
+
+        Returns:
+            CLAHE-enhanced BGR image
+        """
+        # Convert to LAB color space
+        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+
+        # Apply CLAHE to L channel
+        clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
+        l = clahe.apply(l)
+
+        # Merge back
+        lab = cv2.merge([l, a, b])
+        return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+
+    @staticmethod
+    def assess_image_quality(image: np.ndarray) -> dict:
+        """
+        Assess image quality metrics to determine if preprocessing is needed.
+
+        Args:
+            image: Input BGR image
+
+        Returns:
+            Dictionary with quality metrics:
+                - brightness: Mean pixel intensity (0-255)
+                - contrast: Standard deviation of intensity
+                - blur_score: Laplacian variance (>100 is sharp)
+                - needs_preprocessing: Boolean recommendation
+
+        Example:
+            >>> quality = preprocessor.assess_image_quality(img)
+            >>> if quality['needs_preprocessing']:
+            >>>     img = preprocessor.apply_pipeline(img, 'standard')
+        """
+        # Convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Calculate metrics
+        brightness = float(np.mean(gray))
+        contrast = float(np.std(gray))
+        blur_score = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+
+        # Determine if preprocessing is needed
+        needs_preprocessing = (
+            brightness < 60  # Too dark
+            or brightness > 200  # Too bright
+            or contrast < 30  # Low contrast
+            or blur_score < 100  # Blurry
+        )
+
+        return {
+            "brightness": brightness,
+            "contrast": contrast,
+            "blur_score": blur_score,
+            "needs_preprocessing": needs_preprocessing,
+            "quality_score": min(
+                100, (blur_score / 10 + contrast + (100 - abs(128 - brightness))) / 3
+            ),
+        }
 
     @staticmethod
     def resize_image(

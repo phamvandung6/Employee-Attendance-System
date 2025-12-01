@@ -2,6 +2,9 @@
 
 from datetime import datetime
 from pydantic import BaseModel, Field
+from typing import Optional, Literal
+
+PreprocessPipeline = Literal["none", "standard", "quality"]
 
 
 class FaceRegistrationRequest(BaseModel):
@@ -13,6 +16,20 @@ class FaceRegistrationRequest(BaseModel):
     )
 
 
+class ImageQualityMetrics(BaseModel):
+    """Image quality assessment metrics."""
+
+    brightness: float = Field(..., description="Mean pixel intensity (0-255)")
+    contrast: float = Field(..., description="Standard deviation of intensity")
+    blur_score: float = Field(
+        ..., description="Laplacian variance (>100 is sharp, <100 is blurry)"
+    )
+    quality_score: float = Field(..., description="Overall quality score (0-100)")
+    needs_preprocessing: bool = Field(
+        ..., description="Whether preprocessing is recommended"
+    )
+
+
 class FaceRegistrationResponse(BaseModel):
     """Response schema for face registration."""
 
@@ -21,6 +38,7 @@ class FaceRegistrationResponse(BaseModel):
     point_id: str | None = None
     processing_time: float
     message: str
+    image_quality: Optional[ImageQualityMetrics] = None
     error: str | None = None
 
 
@@ -40,6 +58,7 @@ class FaceRecognitionResponse(BaseModel):
     faces_detected: int
     faces_matched: int
     matches: list[FaceMatchInfo]
+    image_quality: Optional[ImageQualityMetrics] = None
     error: str | None = None
 
 

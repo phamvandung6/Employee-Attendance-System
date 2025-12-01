@@ -23,7 +23,7 @@ from app.schemas.face_recognition import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/face-recognition", tags=["face-recognition"])
+router = APIRouter()
 
 
 @router.post("/register", response_model=FaceRegistrationResponse)
@@ -102,6 +102,7 @@ async def register_face(
             message="Face registered successfully"
             if result.success
             else "Registration failed",
+            image_quality=result.image_quality,
             error=result.error,
         )
 

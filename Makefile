@@ -6,11 +6,11 @@ install:
 
 # Run development server
 dev:
-	uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	LD_LIBRARY_PATH=/opt/cuda/lib64:$$LD_LIBRARY_PATH uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Run production server
 run:
-	uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+	LD_LIBRARY_PATH=/opt/cuda/lib64:$$LD_LIBRARY_PATH uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 # Run tests
 test:

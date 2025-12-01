@@ -32,7 +32,7 @@ from app.schemas.attendance import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/attendance", tags=["attendance"])
+router = APIRouter()
 
 
 @router.get("", response_model=AttendanceListResponse)

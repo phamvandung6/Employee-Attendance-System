@@ -14,7 +14,7 @@ from app.schemas.employee import (
     EmployeeListResponse,
 )
 
-router = APIRouter(prefix="/employees", tags=["employees"])
+router = APIRouter()
 
 
 @router.get("", response_model=EmployeeListResponse)
